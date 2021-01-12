@@ -1,1 +1,1 @@
-# dwight_brite
+# dwight-brite
