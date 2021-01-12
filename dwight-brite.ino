@@ -26,7 +26,7 @@ WebServer webServer( 80 );
 /**
  * SPIFFS setup
  * 
- * Initialize ESP32 SPIF filesystem.
+ * Setup ESP32 SPIF filesystem.
  */
 void setup_filesys() {
 	Serial.print( "SPIF_Filesystem::begin ");
@@ -47,7 +47,7 @@ void setup_filesys() {
 /**
  * SoftAP
  * 
- * Initialize software access point.
+ * Setup software access point.
  */
 void setup_network() {
 	Serial.print( "Soft_Access_Point::begin ");
@@ -73,7 +73,7 @@ void setup_network() {
 /**
  * Web server
  * 
- * Initialize asynchronous web server.
+ * Setup asynchronous web server.
  */
 void setup_webserv() {
 
@@ -99,16 +99,12 @@ void setup() {
 	pinMode( output_led, OUTPUT );
 	digitalWrite( output_led, LOW );
 
-	// Initialize serial output.
+	// Start serial output.
 	Serial.begin( 115200 );
 
-	// ...
+	// Setup filesystem, network, and web server.
 	setup_filesys();
-
-	// ...
 	setup_network();
-	
-	// ...
 	setup_webserv();
 }
 
