@@ -6,7 +6,6 @@
 #include <EEPROM.h>
 #include <FastLED.h>
 #include <FastLED_NeoMatrix.h>
-#include <FS.h>
 #include <SPIFFS.h>
 #include <WebServer.h>
 #include <WiFi.h>
@@ -15,16 +14,16 @@
 #include "settings.h"
 
 	// Network settings.
-	const char* ssid     = "Dwight Brite";  // WiFi network SSID.
-	const char* password = "password";      // WiFi network password
+	const char*    ssid           = "Dwight Brite"; // WiFi network SSID.
+	const char*    password       = "password";     // WiFi network password
 
 	// FastLED settings.
-	const uint8_t  led_pin = 14;            // LED ouput pin.
-	const uint8_t  led_brt = 52;            // Default LED brightness (0-255).
-	const uint8_t  led_w   = 40;            // LED matrix width.
-	const uint8_t  led_h   = 30;            // LED matrix height.
-	const uint16_t led_num = led_w * led_h; // Total number of LEDs.
-	const uint16_t led_amp = 4000;          // Max milli-amps of power supply.
+	const uint16_t led_pin        = 14;             // LED ouput pin.
+	const uint16_t led_brightness = 25;             // Default LED brightness (0-255).
+	const uint16_t led_w          = 40;             // LED matrix width.
+	const uint16_t led_h          = 30;             // LED matrix height.
+	const uint16_t led_num        = led_w * led_h;  // Total number of LEDs.
+	const uint16_t led_milliamps  = 4000;           // Max milli-amps of power supply.
 
 	// Unknown settings.
 	const uint8_t output_led = 5;
@@ -34,9 +33,12 @@ WebServer server( 80 );
 
 // ...
 CRGB leds[led_num];
-FastLED_NeoMatrix* matrix = new FastLED_NeoMatrix( leds, led_w, led_h, 1, 1, 
+FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix( leds, led_w, led_h, 1, 1, 
 	NEO_MATRIX_TOP     + NEO_MATRIX_LEFT +
 	NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG );
+
+// ...
+#include "fonts/Jamboree4pt7b.h"
 
 /**
  * SPIFFS
@@ -104,6 +106,8 @@ void setup_webserv() {
 
 /**
  * FastLED
+ * 
+ * Setup leds with default values.
  */
 void setup_fastled() {
 	FastLED.addLeds<WS2812B, led_pin, GRB>( leds, led_num ).setCorrection( TypicalLEDStrip );
@@ -111,14 +115,70 @@ void setup_fastled() {
 	/**
 	 * TODO: calulate maximum milliamps.
 	 * 
-	 * FastLED.setMaxPowerInVoltsAndMilliamps( 5, led_amp );
+	 * FastLED.setMaxPowerInVoltsAndMilliamps( 5, led_milliamps );
 	 */
 
-	FastLED.setBrightness( led_brt );
+	FastLED.setBrightness( led_brightness );
 }
 
-void handleWeb() {
-	server.handleClient();
+/**
+ * ...
+ */
+uint16_t msg_index = 0;
+
+void text_flasher() {
+	String msg_array[] = {
+		"EAT",
+		"SHIT",
+		"ANNA",
+	};
+
+	// ...
+	int16_t  x, y, x1, y1;
+	uint16_t w, h;
+	uint16_t msg_size = ( sizeof( msg_array ) / sizeof( String ) ) - 1;
+
+	// ...
+	matrix->setFont( &Jamboree4pt7b );
+	matrix->getTextBounds( msg_array[msg_index], x, y, &x1, &y1, &w, &h );
+
+	// ...
+	uint16_t cur_x = ( ( led_w - 1 ) / 2 ) - ( w / 2 );
+	uint16_t cur_y = ( ( led_h - 1 ) / 2 ) + ( h / 2 );
+
+	if ( msg_index < msg_size ) {
+		matrix->fillScreen( matrix->Color( 0, 0, 0 ) );
+		matrix->setTextColor( matrix->Color( 255, 0, 0 ) );
+		matrix->setCursor( cur_x, cur_y );
+		matrix->print( msg_array[msg_index] );
+
+		// ...
+		matrix->show();
+		delay( 1000 );
+
+		// ...
+		msg_index++;
+	} else {
+		for ( int i = 0; i < 15; i++ ) {
+			if ( i % 2 == 0 ) {
+				matrix->fillScreen( matrix->Color( 255, 0, 0 ) );
+				matrix->setTextColor( matrix->Color( 0, 0, 0 ) );
+			} else {
+				matrix->fillScreen( matrix->Color( 0, 0, 0 ) );
+				matrix->setTextColor( matrix->Color( 255, 0, 0 ) );
+			}
+
+			matrix->setCursor( cur_x, cur_y );
+			matrix->print( msg_array[msg_index] );
+
+			// ...
+			matrix->show();
+			delay( 100 );
+		}
+
+		// ...
+		msg_index = 0;
+	} 
 }
 
 void setup() {
@@ -142,10 +202,9 @@ void loop() {
 	// ...
 	server.handleClient();
 
-		fill_solid( leds, led_num, CRGB::Red );
-		
-		matrix->setCursor( 0, 0 );
-		matrix->print( ";)" );
+	text_flasher();
 
-	FastLED.show();
+	// FastLED.show();
+
+	// delay( 1000 );
 }
